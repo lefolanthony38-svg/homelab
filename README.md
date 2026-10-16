@@ -42,6 +42,15 @@ Puis, une fois tout vérifié, suppression des règles sudo devenues inutiles :
 ## sudoers (ancien système, remplacé par polkit)
 - `sudoers.d/k52f-sam` : arrêt / relance de Sam depuis le Pilote (vérifier avec `sudo visudo -cf` avant installation).
 
+## Relevé SMART quotidien (pour les tendances de Sam)
+`k52f-smart.service` (root, sans réseau, bac à sable) lance `k52f-smart-releve` chaque matin
+à 7 h 20 et écrit seulement `/var/lib/k52f-mesures/smart-interne.json` (640 root:utilisateur).
+```bash
+sudo install -m 755 bin/k52f-smart-releve /usr/local/sbin/k52f-smart-releve
+sudo install -m 644 systemd/k52f-smart.service systemd/k52f-smart.timer /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now k52f-smart.timer && sudo systemctl start k52f-smart.service
+```
+
 ## ntfy : un sujet secret, hors du code
 - `/etc/k52f-ntfy.conf` (root:utilisateur 640) : sujet lu par le Pilote et le tunnel.
 - `/etc/k52f-alertes.conf` (root 600) : sujet lu par k52f-alertes.

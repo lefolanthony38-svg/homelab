@@ -1,0 +1,9 @@
+[Unit]
+Description=K52F : relevé SMART chaque matin
+
+[Timer]
+OnCalendar=*-*-* 07:20:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

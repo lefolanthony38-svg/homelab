@@ -1,0 +1,14 @@
+#!/bin/bash
+# k52f-smart-releve — relevé SMART quotidien du SSD interne (lancé par k52f-smart.timer, en root).
+# Écrit UNIQUEMENT /var/lib/k52f-mesures/smart-interne.json, lisible par le compte « utilisateur »
+# (Sam en tire les tendances). Aucun réseau, aucune autre écriture.
+set -euo pipefail
+DISQUE=/dev/disk/by-id/ata-KINGSTON_SA400S37480G_50026B7683803AF1
+DOSSIER=/var/lib/k52f-mesures
+SORTIE="$DOSSIER/smart-interne.json"
+
+[ -e "$DISQUE" ] || { echo "Disque introuvable : $DISQUE" >&2; exit 1; }
+# smartctl renvoie un code ≠ 0 dès qu'un indicateur est en alerte : on garde quand même le relevé.
+smartctl --json=c --all "$DISQUE" > "$SORTIE.tmp" || true
+python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$SORTIE.tmp"   # refuse un relevé illisible
+chgrp utilisateur "$SORTIE.tmp" && chmod 640 "$SORTIE.tmp" && mv "$SORTIE.tmp" "$SORTIE"
