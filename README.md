@@ -14,7 +14,7 @@ On modifie ici, on vérifie, puis on installe avec `sudo` (commandes ci-dessous)
 |---|---|---|
 | sam | utilisateur (à migrer) | `~/sam/deploiement/sam.service` |
 | k52f-pilote | utilisateur (à migrer, polkit au lieu de sudo) | à faire |
-| altinformatique | **altinfo** | `systemd/altinformatique.service.d/securite.conf` |
+| altinformatique | **altinfo** ✅ (2026-10-16, note 9,2 → 1,4) | `systemd/altinformatique.service.d/securite.conf` |
 
 ## ALTinformatique sous le compte `altinfo`
 ```bash
@@ -27,3 +27,10 @@ Retour arrière : `sudo rm /etc/systemd/system/altinformatique.service.d/securit
 
 ## sudoers
 - `sudoers.d/k52f-sam` : arrêt / relance de Sam depuis le Pilote (vérifier avec `sudo visudo -cf` avant installation).
+
+## Journal des interventions
+- **2026-10-16** — ALTinformatique passe sous le compte `altinfo` + bac à sable (note systemd 9,2 → 1,4).
+  `.env` en 640 `utilisateur:altinfo`.
+  Panne découverte au passage (depuis au moins le 11/10) : MySQL refusait `altinfo_user`
+  (mot de passe différent du `.env`) → mot de passe resynchronisé depuis le `.env` sans l'afficher ;
+  base jamais initialisée (tables absentes) → `npm run db:init` lancé par Anthony.
