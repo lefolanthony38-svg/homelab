@@ -1,0 +1,1 @@
+utilisateur ALL=(root) NOPASSWD: /usr/bin/systemctl stop sam, /usr/bin/systemctl start sam
