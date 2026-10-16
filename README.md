@@ -52,7 +52,7 @@ Puis, une fois tout vérifié, suppression des règles sudo devenues inutiles :
   Règle retenue : tester les droits avec `pkcheck` ou depuis le service, jamais avec une commande réelle.
 
 ## À faire
-- Supprimer les règles sudo devenues inutiles (`/etc/sudoers.d/k52f-pilote`, `k52f-sam`).
+- ~~Supprimer les règles sudo devenues inutiles~~ : fait le 2026-10-16 (k52f-pilote, k52f-sam).
 - Compte dédié `pilote` pour le Pilote (polkit réservé à ce compte et non plus à `utilisateur`).
 - Sujet ntfy : le sortir des scripts /usr/local (k52f-alertes, k52f-tunnel-lib.sh), puis le changer.
 - PIN → mots de passe : revoir validation, champs et style (Sam et Pilote) le moment venu.
