@@ -1,0 +1,50 @@
+#!/bin/bash
+# k52f-ntfy-changer — change le sujet ntfy des alertes du K52F (à lancer avec sudo).
+# Le sujet est le seul secret de ntfy.sh : quiconque le connaît peut lire tes alertes
+# et t'en envoyer de fausses. Ce script :
+#   1. génère un nouveau sujet aléatoire (impossible à deviner) ;
+#   2. l'écrit dans /etc/k52f-ntfy.conf (Pilote, tunnel) et /etc/k52f-alertes.conf (alertes) ;
+#   3. envoie une notification de test sur l'ANCIEN et le NOUVEAU sujet ;
+#   4. l'affiche UNE fois pour que tu t'abonnes dans l'appli ntfy (ne le colle nulle part).
+set -euo pipefail
+[ "$(id -u)" = 0 ] || { echo "À lancer avec sudo : sudo k52f-ntfy-changer" >&2; exit 1; }
+
+CONF=/etc/k52f-ntfy.conf
+ALERTES=/etc/k52f-alertes.conf
+GROUPE=utilisateur   # compte qui fait tourner le Pilote et le tunnel
+
+ancien=$(sed -n 's/^NTFY_TOPIC=//p' "$ALERTES" 2>/dev/null | tr -d '"' | head -1 || true)
+nouveau="k52f-$(head -c 18 /dev/urandom | base32 | tr -d '=' | tr 'A-Z' 'a-z')"
+
+# Fichier commun (Pilote, tunnel) : root, lisible par le seul groupe du Pilote.
+umask 077
+printf '# Sujet ntfy des alertes du K52F (créé par k52f-ntfy-changer, %s)\nNTFY_TOPIC=%s\n' "$(date -I)" "$nouveau" > "$CONF.tmp"
+chown root:"$GROUPE" "$CONF.tmp" && chmod 640 "$CONF.tmp" && mv "$CONF.tmp" "$CONF"
+
+# Fichier des alertes (root seulement) : on remplace la ligne, le reste est conservé.
+if [ -f "$ALERTES" ]; then
+  cp -p "$ALERTES" "$ALERTES.avant-changement"
+  if grep -q '^NTFY_TOPIC=' "$ALERTES"; then
+    sed -i "s/^NTFY_TOPIC=.*/NTFY_TOPIC=\"$nouveau\"/" "$ALERTES"
+  else
+    printf 'NTFY_TOPIC="%s"\n' "$nouveau" >> "$ALERTES"
+  fi
+  chmod 600 "$ALERTES"
+fi
+
+envoyer() { # sujet titre message
+  python3 -c 'import json,sys; print(json.dumps({"topic":sys.argv[1],"title":sys.argv[2],"message":sys.argv[3],"tags":["key"]}))' "$1" "$2" "$3" \
+    | curl -s -m 15 -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' -d @- https://ntfy.sh/
+}
+[ -n "$ancien" ] && [ "$ancien" != "$nouveau" ] && envoyer "$ancien" "🔑 Sujet ntfy changé" \
+  "Ce sujet n'est plus utilisé par le K52F. Abonne-toi au nouveau (affiché dans le terminal), puis supprime celui-ci de l'appli." >/dev/null || true
+code=$(envoyer "$nouveau" "✅ Nouveau sujet ntfy du K52F" "Si tu vois ce message, l'abonnement fonctionne.")
+
+echo "Sujet ntfy changé (fichiers : $CONF, $ALERTES)."
+echo "Notification de test : HTTP $code"
+echo
+echo "Abonne-toi dans l'appli ntfy (bouton +) à ce sujet, puis supprime l'ancien :"
+echo
+echo "    $nouveau"
+echo
+echo "Ne le colle nulle part (ni chat, ni mail) : c'est le seul secret de tes notifications."

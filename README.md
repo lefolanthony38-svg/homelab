@@ -39,6 +39,17 @@ Puis, une fois tout vérifié, suppression des règles sudo devenues inutiles :
 ## sudoers (ancien système, remplacé par polkit)
 - `sudoers.d/k52f-sam` : arrêt / relance de Sam depuis le Pilote (vérifier avec `sudo visudo -cf` avant installation).
 
+## ntfy : un sujet secret, hors du code
+- `/etc/k52f-ntfy.conf` (root:utilisateur 640) : sujet lu par le Pilote et le tunnel.
+- `/etc/k52f-alertes.conf` (root 600) : sujet lu par k52f-alertes.
+- Changer de sujet (génère, met à jour les deux fichiers, envoie un test, l'affiche une fois) :
+```bash
+sudo install -m 755 bin/k52f-ntfy-changer /usr/local/sbin/k52f-ntfy-changer
+sudo install -m 644 lib/k52f-tunnel-lib.sh /usr/local/lib/k52f-tunnel-lib.sh
+sudo k52f-ntfy-changer
+```
+Sam a son propre sujet (`NTFY_SUJET` dans `~/sam/.env`).
+
 ## Journal des interventions
 - **2026-10-16** — ALTinformatique passe sous le compte `altinfo` + bac à sable (note systemd 9,2 → 1,4).
   `.env` en 640 `utilisateur:altinfo`.
@@ -54,5 +65,5 @@ Puis, une fois tout vérifié, suppression des règles sudo devenues inutiles :
 ## À faire
 - ~~Supprimer les règles sudo devenues inutiles~~ : fait le 2026-10-16 (k52f-pilote, k52f-sam).
 - Compte dédié `pilote` pour le Pilote (polkit réservé à ce compte et non plus à `utilisateur`).
-- Sujet ntfy : le sortir des scripts /usr/local (k52f-alertes, k52f-tunnel-lib.sh), puis le changer.
+- Sujet ntfy : préparé (lib du tunnel sans sujet en dur + k52f-ntfy-changer), à installer.
 - PIN → mots de passe : revoir validation, champs et style (Sam et Pilote) le moment venu.
