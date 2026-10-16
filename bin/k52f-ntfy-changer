@@ -47,4 +47,12 @@ echo "Abonne-toi dans l'appli ntfy (bouton +) à ce sujet, puis supprime l'ancie
 echo
 echo "    $nouveau"
 echo
+# QR code : à scanner avec le téléphone (l'appli ntfy propose alors de s'abonner).
+if command -v qrencode >/dev/null; then
+  echo "Ou scanne ce QR code avec l'appareil photo du téléphone :"
+  qrencode -t ansiutf8 "https://ntfy.sh/$nouveau"
+else
+  echo "(Astuce : « sudo apt install qrencode » pour afficher un QR code la prochaine fois.)"
+fi
+echo
 echo "Ne le colle nulle part (ni chat, ni mail) : c'est le seul secret de tes notifications."
