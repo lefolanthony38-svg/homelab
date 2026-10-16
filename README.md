@@ -45,3 +45,14 @@ Puis, une fois tout vérifié, suppression des règles sudo devenues inutiles :
   Panne découverte au passage (depuis au moins le 11/10) : MySQL refusait `altinfo_user`
   (mot de passe différent du `.env`) → mot de passe resynchronisé depuis le `.env` sans l'afficher ;
   base jamais initialisée (tables absentes) → `npm run db:init` lancé par Anthony.
+- **2026-10-16** — Pilote : sudo remplacé par polkit (`50-k52f-pilote.rules`) + bac à sable
+  (note 9,2 → 1,8). Testé depuis le téléphone : arrêt d'urgence + relance de Sam, mise à jour
+  des sites, sans aucune demande de mot de passe. Incident pendant mes tests : un essai
+  « stop nginx » a déclenché une fenêtre polkit sur le bureau, approuvée → Nginx coupé ~1 min.
+  Règle retenue : tester les droits avec `pkcheck` ou depuis le service, jamais avec une commande réelle.
+
+## À faire
+- Supprimer les règles sudo devenues inutiles (`/etc/sudoers.d/k52f-pilote`, `k52f-sam`).
+- Compte dédié `pilote` pour le Pilote (polkit réservé à ce compte et non plus à `utilisateur`).
+- Sujet ntfy : le sortir des scripts /usr/local (k52f-alertes, k52f-tunnel-lib.sh), puis le changer.
+- PIN → mots de passe : revoir validation, champs et style (Sam et Pilote) le moment venu.
