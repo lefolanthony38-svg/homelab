@@ -1,0 +1,39 @@
+// Droits du Pilote K52F, à la place de sudo (installé dans /etc/polkit-1/rules.d/).
+// Liste FERMÉE : seules ces actions précises sont permises, sans mot de passe,
+// au compte qui fait tourner le Pilote. Tout le reste suit les règles normales.
+// (JavaScript ES5 : polkit n'accepte pas la syntaxe moderne.)
+polkit.addRule(function (action, subject) {
+  if (subject.user !== "utilisateur") {
+    return polkit.Result.NOT_HANDLED;
+  }
+
+  // Services : quelle action est permise sur quelle unité.
+  if (action.id === "org.freedesktop.systemd1.manage-units") {
+    var permis = {
+      "nginx.service": ["restart"],
+      "mysql.service": ["restart"],
+      "altinformatique.service": ["restart"],
+      "sam.service": ["start", "stop"]
+    };
+    var unite = action.lookup("unit");
+    var verbe = action.lookup("verb");
+    if (permis[unite] && permis[unite].indexOf(verbe) >= 0) {
+      return polkit.Result.YES;
+    }
+    return polkit.Result.NOT_HANDLED;
+  }
+
+  // Redémarrer / éteindre le K52F (le Pilote redemande déjà le PIN avant).
+  var alimentation = [
+    "org.freedesktop.login1.reboot",
+    "org.freedesktop.login1.reboot-multiple-sessions",
+    "org.freedesktop.login1.reboot-ignore-inhibit",
+    "org.freedesktop.login1.power-off",
+    "org.freedesktop.login1.power-off-multiple-sessions",
+    "org.freedesktop.login1.power-off-ignore-inhibit"
+  ];
+  if (alimentation.indexOf(action.id) >= 0) {
+    return polkit.Result.YES;
+  }
+  return polkit.Result.NOT_HANDLED;
+});

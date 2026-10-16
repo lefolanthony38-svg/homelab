@@ -13,7 +13,7 @@ On modifie ici, on vérifie, puis on installe avec `sudo` (commandes ci-dessous)
 | Service | Compte | Bac à sable |
 |---|---|---|
 | sam | utilisateur (à migrer) | `~/sam/deploiement/sam.service` |
-| k52f-pilote | utilisateur (à migrer, polkit au lieu de sudo) | à faire |
+| k52f-pilote | utilisateur (compte dédié : étape suivante) | `systemd/k52f-pilote.service.d/securite.conf` + `polkit/50-k52f-pilote.rules` |
 | altinformatique | **altinfo** ✅ (2026-10-16, note 9,2 → 1,4) | `systemd/altinformatique.service.d/securite.conf` |
 
 ## ALTinformatique sous le compte `altinfo`
@@ -25,7 +25,18 @@ sudo systemctl daemon-reload && sudo systemctl restart altinformatique
 ```
 Retour arrière : `sudo rm /etc/systemd/system/altinformatique.service.d/securite.conf && sudo systemctl daemon-reload && sudo systemctl restart altinformatique`.
 
-## sudoers
+## Pilote : polkit au lieu de sudo
+Le Pilote appelle `systemctl` directement ; polkit lui permet UNIQUEMENT : restart de nginx,
+mysql et altinformatique, start/stop de sam, redémarrer/éteindre le K52F.
+```bash
+sudo install -m 644 -o root -g root polkit/50-k52f-pilote.rules /etc/polkit-1/rules.d/50-k52f-pilote.rules
+sudo install -m 755 -o root -g root bin/k52f-maj-sites /usr/local/bin/k52f-maj-sites
+sudo install -D -m 644 systemd/k52f-pilote.service.d/securite.conf /etc/systemd/system/k52f-pilote.service.d/securite.conf
+```
+Puis, une fois tout vérifié, suppression des règles sudo devenues inutiles :
+`sudo rm /etc/sudoers.d/k52f-pilote /etc/sudoers.d/k52f-sam`.
+
+## sudoers (ancien système, remplacé par polkit)
 - `sudoers.d/k52f-sam` : arrêt / relance de Sam depuis le Pilote (vérifier avec `sudo visudo -cf` avant installation).
 
 ## Journal des interventions
