@@ -64,11 +64,15 @@ Sam a son propre sujet (`NTFY_SUJET` dans `~/sam/.env`).
   des sites, sans aucune demande de mot de passe. Incident pendant mes tests : un essai
   « stop nginx » a déclenché une fenêtre polkit sur le bureau, approuvée → Nginx coupé ~1 min.
   Règle retenue : tester les droits avec `pkcheck` ou depuis le service, jamais avec une commande réelle.
+- **2026-10-16** — Droits polkit réservés au cgroup du Pilote ; sujet ntfy sorti de
+  k52f-tunnel-lib.sh puis changé (ancien sujet supprimé partout). Testé depuis le téléphone :
+  restart altinformatique, arrêt d'urgence + relance de Sam, sans aucune fenêtre de mot de passe ;
+  le terminal ne peut plus redémarrer/éteindre le PC sans mot de passe.
 
 ## À faire
 - ~~Supprimer les règles sudo devenues inutiles~~ : fait le 2026-10-16 (k52f-pilote, k52f-sam).
 - ~~Droits polkit réservés au Pilote~~ : fait via le cgroup du service (sans changer de compte).
 - Bonus (migration matérielle) : compte dédié `pilote` + tunnel en service systemd partagé
   entre le bureau et le Pilote (aujourd'hui l'état du tunnel est dans ~/.cache et partagé).
-- Sujet ntfy : préparé (lib du tunnel sans sujet en dur + k52f-ntfy-changer), à installer.
+- ~~Sujet ntfy~~ : sorti du code et changé le 2026-10-16 (k52f-ntfy-changer).
 - PIN → mots de passe : revoir validation, champs et style (Sam et Pilote) le moment venu.
