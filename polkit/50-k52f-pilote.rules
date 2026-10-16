@@ -2,8 +2,23 @@
 // Liste FERMÉE : seules ces actions précises sont permises, sans mot de passe,
 // au compte qui fait tourner le Pilote. Tout le reste suit les règles normales.
 // (JavaScript ES5 : polkit n'accepte pas la syntaxe moderne.)
+// Vrai seulement si le processus demandeur tourne DANS le service du Pilote (son « cgroup »).
+// Ainsi, les autres programmes du compte « utilisateur » n'ont pas ces droits.
+function dansLePilote(subject) {
+  try {
+    var cgroup = polkit.spawn(["/usr/bin/cat", "/proc/" + subject.pid + "/cgroup"]);
+    return cgroup.indexOf("/system.slice/k52f-pilote.service") >= 0;
+  } catch (e) {
+    return false; // dans le doute : pas de droit
+  }
+}
+
 polkit.addRule(function (action, subject) {
   if (subject.user !== "utilisateur") {
+    return polkit.Result.NOT_HANDLED;
+  }
+  var concerne = action.id === "org.freedesktop.systemd1.manage-units" || action.id.indexOf("org.freedesktop.login1.") === 0;
+  if (!concerne || !dansLePilote(subject)) {
     return polkit.Result.NOT_HANDLED;
   }
 

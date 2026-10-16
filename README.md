@@ -28,6 +28,9 @@ Retour arrière : `sudo rm /etc/systemd/system/altinformatique.service.d/securit
 ## Pilote : polkit au lieu de sudo
 Le Pilote appelle `systemctl` directement ; polkit lui permet UNIQUEMENT : restart de nginx,
 mysql et altinformatique, start/stop de sam, redémarrer/éteindre le K52F.
+Ces droits sont réservés aux processus qui tournent **dans le service du Pilote** (vérification
+du cgroup via `polkit.spawn`) : ni le terminal, ni la session, ni un autre service du compte
+`utilisateur` n'en profitent.
 ```bash
 sudo install -m 644 -o root -g root polkit/50-k52f-pilote.rules /etc/polkit-1/rules.d/50-k52f-pilote.rules
 sudo install -m 755 -o root -g root bin/k52f-maj-sites /usr/local/bin/k52f-maj-sites
@@ -64,6 +67,8 @@ Sam a son propre sujet (`NTFY_SUJET` dans `~/sam/.env`).
 
 ## À faire
 - ~~Supprimer les règles sudo devenues inutiles~~ : fait le 2026-10-16 (k52f-pilote, k52f-sam).
-- Compte dédié `pilote` pour le Pilote (polkit réservé à ce compte et non plus à `utilisateur`).
+- ~~Droits polkit réservés au Pilote~~ : fait via le cgroup du service (sans changer de compte).
+- Bonus (migration matérielle) : compte dédié `pilote` + tunnel en service systemd partagé
+  entre le bureau et le Pilote (aujourd'hui l'état du tunnel est dans ~/.cache et partagé).
 - Sujet ntfy : préparé (lib du tunnel sans sujet en dur + k52f-ntfy-changer), à installer.
 - PIN → mots de passe : revoir validation, champs et style (Sam et Pilote) le moment venu.
