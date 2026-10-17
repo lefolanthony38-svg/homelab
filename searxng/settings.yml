@@ -1,0 +1,26 @@
+# SearXNG du K52F : moteur de recherche personnel pour Sam (aucun compte, aucun cookie, aucun pistage).
+# Le secret « @SECRET@ » est remplacé à l'installation par une valeur aléatoire (jamais dans Git).
+use_default_settings: true
+
+general:
+  instance_name: "SearXNG K52F"
+  enable_metrics: false        # aucune statistique d'usage
+
+search:
+  safe_search: 1               # filtre « modéré »
+  autocomplete: ""             # pas d'autocomplétion (elle enverrait chaque lettre tapée)
+  default_lang: "fr-FR"
+  formats: [html, json]        # json : pour que Sam puisse lire les résultats
+
+server:
+  secret_key: "@SECRET@"
+  limiter: false               # usage personnel, local seulement
+  image_proxy: false
+  public_instance: false
+  method: "GET"
+
+ui:
+  default_locale: "fr"
+
+outgoing:
+  request_timeout: 4.0

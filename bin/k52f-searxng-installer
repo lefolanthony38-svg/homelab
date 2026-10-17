@@ -1,0 +1,41 @@
+#!/bin/bash
+# k52f-searxng-installer — installe SearXNG en Podman sans root sous le compte « searxng ».
+# À lancer avec sudo, depuis le dossier du dépôt homelab. Ne touche à aucun autre service.
+set -euo pipefail
+[ "$(id -u)" = 0 ] || { echo "À lancer avec sudo." >&2; exit 1; }
+cd "$(dirname "$0")/.."
+COMPTE=searxng
+
+command -v podman >/dev/null || { echo "Podman absent : sudo apt install podman" >&2; exit 1; }
+
+# 1. Compte dédié : pas de mot de passe, pas de shell, pas de sudo ; plages d'identifiants
+#    pour les conteneurs sans root.
+if ! id "$COMPTE" >/dev/null 2>&1; then
+  useradd --create-home --home-dir /home/$COMPTE --shell /usr/sbin/nologin --comment "SearXNG (Podman sans root)" "$COMPTE"
+fi
+grep -q "^$COMPTE:" /etc/subuid || usermod --add-subuids 200000-265535 --add-subgids 200000-265535 "$COMPTE"
+chmod 750 /home/$COMPTE
+# Son systemd « utilisateur » tourne même sans session ouverte (pour démarrer au boot).
+loginctl enable-linger "$COMPTE"
+
+# 2. Réglages, avec un secret aléatoire écrit directement (jamais affiché).
+install -d -o "$COMPTE" -g "$COMPTE" -m 700 /home/$COMPTE/searxng /home/$COMPTE/.config/containers/systemd
+secret=$(head -c 32 /dev/urandom | base64 | tr -d '/+=' | head -c 40)
+sed "s/@SECRET@/$secret/" searxng/settings.yml > /home/$COMPTE/searxng/settings.yml
+unset secret
+chown "$COMPTE:$COMPTE" /home/$COMPTE/searxng/settings.yml && chmod 600 /home/$COMPTE/searxng/settings.yml
+install -o "$COMPTE" -g "$COMPTE" -m 644 searxng/searxng.container /home/$COMPTE/.config/containers/systemd/searxng.container
+
+# 3. Démarrage, en tant que « searxng » (téléchargement de l'image la première fois : ~100 Mo).
+uid=$(id -u "$COMPTE")
+for i in $(seq 1 20); do [ -d /run/user/$uid ] && break; sleep 0.5; done
+sous() { sudo -u "$COMPTE" XDG_RUNTIME_DIR=/run/user/$uid DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus "$@"; }
+sous systemctl --user daemon-reload
+sous systemctl --user restart searxng.service
+echo "Démarrage de SearXNG (premier téléchargement de l'image possible)…"
+for i in $(seq 1 60); do
+  if curl -s -m 3 -o /dev/null "http://127.0.0.1:8888/healthz"; then echo "SearXNG répond sur http://127.0.0.1:8888 ✅"; exit 0; fi
+  sleep 5
+done
+echo "SearXNG ne répond pas encore. Journal : sudo -u $COMPTE XDG_RUNTIME_DIR=/run/user/$uid journalctl --user -u searxng -n 30" >&2
+exit 1

@@ -14,6 +14,7 @@ On modifie ici, on vérifie, puis on installe avec `sudo` (commandes ci-dessous)
 |---|---|---|
 | sam | utilisateur (à migrer) | `~/sam/deploiement/sam.service` |
 | k52f-pilote | utilisateur (compte dédié : étape suivante) | `systemd/k52f-pilote.service.d/securite.conf` + `polkit/50-k52f-pilote.rules` |
+| searxng | **searxng** (Podman sans root) | `searxng/` |
 | altinformatique | **altinfo** ✅ (2026-10-16, note 9,2 → 1,4) | `systemd/altinformatique.service.d/securite.conf` |
 
 ## ALTinformatique sous le compte `altinfo`
@@ -50,6 +51,16 @@ sudo install -m 755 bin/k52f-smart-releve /usr/local/sbin/k52f-smart-releve
 sudo install -m 644 systemd/k52f-smart.service systemd/k52f-smart.timer /etc/systemd/system/
 sudo systemctl daemon-reload && sudo systemctl enable --now k52f-smart.timer && sudo systemctl start k52f-smart.service
 ```
+
+## SearXNG (recherche web de Sam) : Podman sans root
+Compte dédié `searxng` (pas de mot de passe, pas de shell, pas de sudo), conteneur rootless
+(« quadlet » `searxng/searxng.container`), image à version et empreinte fixées, écoute sur
+127.0.0.1:8888 seulement. Secret généré à l'installation, jamais dans Git.
+```bash
+sudo apt install podman
+sudo ~/projets/k52f-homelab/bin/k52f-searxng-installer
+```
+Mettre à jour : changer la ligne `Image=` (version + empreinte) puis relancer l'installateur.
 
 ## ntfy : un sujet secret, hors du code
 - `/etc/k52f-ntfy.conf` (root:utilisateur 640) : sujet lu par le Pilote et le tunnel.

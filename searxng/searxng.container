@@ -1,0 +1,21 @@
+# SearXNG en conteneur Podman SANS ROOT, sous le compte dédié « searxng » (fichier « quadlet »
+# installé dans /home/searxng/.config/containers/systemd/). Écoute sur 127.0.0.1:8888 seulement.
+[Unit]
+Description=SearXNG (recherche web de Sam), Podman sans root
+After=network-online.target
+
+[Container]
+# Version précise et empreinte vérifiée : Podman refuse toute autre image.
+Image=docker.io/searxng/searxng:2026.10.2-19ffbcd30@sha256:c642712fcedcdaa78fac44f71eada86aff510745826ba1bd1a368211fea2ce7f
+ContainerName=searxng
+PublishPort=127.0.0.1:8888:8080
+Volume=%h/searxng/settings.yml:/etc/searxng/settings.yml:ro
+Environment=SEARXNG_BASE_URL=http://127.0.0.1:8888/
+NoNewPrivileges=true
+
+[Service]
+Restart=always
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target
