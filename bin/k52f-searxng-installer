@@ -28,14 +28,16 @@ install -o "$COMPTE" -g "$COMPTE" -m 644 searxng/searxng.container /home/$COMPTE
 
 # 3. Démarrage, en tant que « searxng » (téléchargement de l'image la première fois : ~100 Mo).
 uid=$(id -u "$COMPTE")
-for i in $(seq 1 20); do [ -d /run/user/$uid ] && break; sleep 0.5; done
-sous() { sudo -u "$COMPTE" XDG_RUNTIME_DIR=/run/user/$uid DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus "$@"; }
-sous systemctl --user daemon-reload
-sous systemctl --user restart searxng.service
+# On démarre son gestionnaire systemd et on attend que son « bus » (canal de commande) soit prêt.
+systemctl start "user@$uid.service"
+for i in $(seq 1 40); do [ -S /run/user/$uid/bus ] && break; sleep 0.5; done
+sous() { systemctl --user --machine="$COMPTE@" "$@"; }
+sous daemon-reload
+sous restart searxng.service
 echo "Démarrage de SearXNG (premier téléchargement de l'image possible)…"
 for i in $(seq 1 60); do
   if curl -s -m 3 -o /dev/null "http://127.0.0.1:8888/healthz"; then echo "SearXNG répond sur http://127.0.0.1:8888 ✅"; exit 0; fi
   sleep 5
 done
-echo "SearXNG ne répond pas encore. Journal : sudo -u $COMPTE XDG_RUNTIME_DIR=/run/user/$uid journalctl --user -u searxng -n 30" >&2
+echo "SearXNG ne répond pas encore. Journal : sudo journalctl _UID=$uid -n 30" >&2
 exit 1
